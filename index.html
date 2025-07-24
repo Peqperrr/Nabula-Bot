@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming + Entwicklung Station - Enhanced v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@300;400;600&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* --- Custom CSS --- */
+        :root {
+            --bg-dark-navy: #000000;
+            --card-bg: rgba(16, 10, 38, 0.8);
+            --card-border: rgba(119, 79, 212, 0.25);
+            --card-glow-border: rgba(119, 79, 212, 0.6);
+            --text-primary: #EAE6FF;
+            --text-secondary: #a7a2c3;
+            --accent-1: #00D4FF;
+            --accent-2: #E83DFF;
+            --accent-3: #925FFC;
+            --button-bg: #1A75FF;
+        }
+
+        /* Theme: Red */
+        body.theme-red {
+            --card-border: rgba(255, 50, 50, 0.25);
+            --card-glow-border: rgba(255, 50, 50, 0.6);
+            --accent-1: #FF416C;
+            --accent-2: #FF4B2B;
+            --accent-3: #FF8235;
+            --button-bg: #FF4B2B;
+        }
+        /* Theme: Green */
+        body.theme-green {
+            --card-border: rgba(50, 255, 150, 0.25);
+            --card-glow-border: rgba(50, 255, 150, 0.6);
+            --accent-1: #00FF87;
+            --accent-2: #07E5B0;
+            --accent-3: #2AF598;
+            --button-bg: #00C97B;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-dark-navy);
+            transition: background-color 0.5s;
+        }
+
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-vt323 { font-family: 'VT323', monospace; }
+
+        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
+
+        .card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            position: relative;
+            overflow: hidden;
+        }
+        .card.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--card-glow-border);
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5), 0 0 20px var(--card-glow-border);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at var(--x) var(--y), rgba(255, 255, 255, 0.2), transparent 20%);
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .card:hover::before { opacity: 1; }
+
+        .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
+        .fade-in-section { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+
+        .title-animated {
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: text-gradient-flow 8s ease-in-out infinite;
+        }
+        @keyframes text-gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        .pulsate-loop { animation: pulsate-effect 3s ease-in-out infinite; }
+        @keyframes pulsate-effect { 0% { transform: scale(1); filter: drop-shadow(0 0 4px var(--accent-1)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 10px var(--accent-3)); } 100% { transform: scale(1); filter: drop-shadow(0 0 4px var(--accent-1)); } }
+        .component-icon-small { width: 56px; height: 56px; stroke-width: 1.5; }
+
+        .chart-bar-animated { transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1); width: 0; }
+        .is-visible .chart-bar-animated { width: var(--target-width); }
+        
+        .donut-animated { stroke-dasharray: 0, 100; transition: stroke-dasharray 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
+        .is-visible .donut-animated { stroke-dasharray: var(--target-stroke); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--card-bg); border: 1px solid var(--card-glow-border); padding: 2rem; border-radius: 1.25rem; max-width: 500px; width: 90%; transform: scale(0.9); transition: transform 0.4s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .loader { border: 4px solid var(--card-border); border-top: 4px solid var(--accent-1); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .title-sparkle::before { content: '✨'; margin-right: 0.75rem; filter: saturate(1.5); vertical-align: middle; }
+        .textarea-custom { background-color: rgba(0,0,0,0.2); border: 1px solid var(--card-border); }
+        .ki-button { background-color: var(--button-bg); opacity: 0.9; transition: all 0.3s ease; border: none; }
+        .ki-button:hover { opacity: 1; transform: scale(1.05); box-shadow: 0 0 20px var(--button-bg); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="particles-js"></div>
+
+    <!-- Theme Switcher -->
+    <div class="fixed top-4 right-4 z-50 flex gap-2">
+        <button class="theme-button w-6 h-6 rounded-full bg-purple-500 border-2 border-white/50" data-theme="default"></button>
+        <button class="theme-button w-6 h-6 rounded-full bg-red-500 border-2 border-white/50" data-theme="theme-red"></button>
+        <button class="theme-button w-6 h-6 rounded-full bg-green-500 border-2 border-white/50" data-theme="theme-green"></button>
+    </div>
+
+    <div class="relative z-10 container mx-auto px-4 py-12 md:py-20">
+
+        <header class="text-center mb-16 md:mb-24 fade-in-section">
+            <h1 class="font-cinzel text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-widest" style="text-shadow: 0 0 8px var(--accent-1), 0 0 18px var(--accent-3);">
+                GAMING + ENTWICKLUNG STATION
+            </h1>
+            <p class="text-md sm:text-lg text-slate-300 mt-4">Eine visuelle Aufschlüsselung der ultimativen Leistungs-Hardware</p>
+        </header>
+
+        <main class="space-y-16 md:space-y-24">
+            
+            <section class="fade-in-section">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center title-animated">Komponentenübersicht</h2>
+                <div id="component-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                    <!-- Components will be injected here by JS -->
+                </div>
+                <div class="text-center mt-8">
+                    <button id="copy-build-button" class="ki-button text-white font-bold py-2 px-6 rounded-lg text-sm">📋 Konfiguration kopieren</button>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                <!-- Card: Herzstück -->
+                <div class="card p-6 md:p-8">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4 title-animated">Das Herzstück des Systems</h2>
+                    <p class="text-sm md:text-base text-slate-300 mb-6">Das Fundament dieser Maschine wird durch eine CPU mit extremer leistung und blitzschnellem DDR5-RAM gebildet. Diese Kombination ist entscheidend für die Bewältigung komplexer Entwicklungsaufgaben und die Bereitstellung flüssiger Frameraten in den neuesten Spielen.</p>
+                    <div class="space-y-4 mb-8">
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">AMD Ryzen 9 9950X3D</h3><p class="text-xs md:text-sm text-slate-400">16 Kerne / 32 Threads</p></div>
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">Corsair Dominator Titanium</h3><p class="text-xs md:text-sm text-slate-400">64 GB DDR5-6600 RAM</p></div>
+                    </div>
+                    <button class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm" data-topic="Herzstück">✨ KI-Analyse</button>
+                </div>
+                <!-- Card: CPU Chart -->
+                <div class="card p-6 md:p-8 flex flex-col justify-center">
+                    <div class="w-full space-y-5">
+                        <div class="flex items-center gap-3"><span class="text-xs text-slate-400 w-28 text-right">Standard Quad-Core</span><div class="flex-1 bg-slate-700/50 rounded-full h-2.5"><div class="chart-bar-animated h-2.5 rounded-full" style="--target-width: 20%; background-color: var(--accent-3);"></div></div></div>
+                        <div class="flex items-center gap-3"><span class="text-xs text-slate-400 w-28 text-right">h-End Gaming (8-Core)</span><div class="flex-1 bg-slate-700/50 rounded-full h-2.5"><div class="chart-bar-animated h-2.5 rounded-full" style="--target-width: 45%; background-color: var(--accent-2);"></div></div></div>
+                        <div class="flex items-center gap-3"><span class="text-xs text-white w-28 text-right">9950X3D (Dieses Build)</span><div class="flex-1 bg-slate-700/50 rounded-full h-2.5"><div class="chart-bar-animated h-2.5 rounded-full" style="--target-width: 90%; background-color: var(--accent-1);"></div></div></div>
+                    </div>
+                    <p class="text-center mt-4 text-slate-400 text-xs">Vergleich der CPU-Kernanzahl</p>
+                </div>
+                <!-- Card: VRAM Donut Chart -->
+                <div class="card p-6 md:p-8 flex flex-col justify-center">
+                    <div class="relative w-40 h-40 md:w-48 md:h-48 mx-auto"><svg class="w-full h-full" viewBox="0 0 36 36" style="transform: rotate(-90deg)"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" stroke-width="3.5"></circle><path class="donut-animated" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--accent-1)" stroke-width="3.5" stroke-linecap="round" style="--target-stroke: 60, 100;"></path><path class="donut-animated" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--accent-2)" stroke-width="3.5" stroke-linecap="round" style="--target-stroke: 25, 100; stroke-dashoffset: -60; transition-delay: 0.2s;"></path></svg></div>
+                    <div class="mt-6 space-y-2 text-xs md:text-sm"><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5" style="background-color: var(--accent-1)"></div><span>Gaming (High/Ultra)</span></div><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5" style="background-color: var(--accent-2)"></div><span>4K Texturen & Assets</span></div><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5 bg-slate-600"></div><span>Freier Puffer</span></div></div>
+                    <p class="text-center mt-4 text-slate-400 text-xs">VRAM-Kapazität für anspruchsvolle Aufgaben</p>
+                </div>
+                <!-- Card: Visuelle Suprematie -->
+                <div class="card p-6 md:p-8">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4 title-animated">Visuelle & Speicher-Suprematie</h2>
+                    <p class="text-sm md:text-base text-slate-300 mb-6">Mit einer Grafikkarte der nächsten Generation und zwei NVMe-SSDs ist das System für 4K-Gaming mit Raytracing und sofortige Ladezeiten gerüstet. Der massive VRAM-Pool bewältigt die größten Texturen und Modelle, während der 8-TB-Speicherplatz eine riesige Spiele- und Projektbibliothek beherbergt.</p>
+                    <div class="space-y-4 mb-8">
+                        <div><h3 class="font-semibold text-white text-2xl md:text-3xl">32 GB</h3><p class="text-sm md:text-base text-slate-400">RTX 5090 VRAM</p></div>
+                        <div><h3 class="font-semibold text-white text-2xl md:text-3xl">8 TB</h3><p class="text-sm md:text-base text-slate-400">PCIe 4.0 NVMe Speicher</p></div>
+                    </div>
+                    <button class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm" data-topic="Grafik">✨ KI-Analyse</button>
+                </div>
+                <!-- Card: Thermische Exzellenz -->
+                <div class="card p-6 md:p-8">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4 title-animated">Thermische & Energie-Exzellenz</h2>
+                    <p class="text-sm md:text-base text-slate-300 mb-6">Um Spitzenleistung aufrechtzuerhalten, sind eine robuste Kühlung und eine stabile Stromversorgung unerlässlich. Eine 360-mm-AIO-Wasserkühlung und ein 1200-W-Platin-Netzteil stellen sicher, dass das System auch unter extremster Last kühl, leise und effizient bleibt.</p>
+                    <div class="space-y-4 mb-8">
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">ASUS ROG STRIX LC 360</h3><p class="text-xs md:text-sm text-slate-400">Flüssigkeitskühlung</p></div>
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">ASUS ROG STRIX 1200P</h3><p class="text-xs md:text-sm text-slate-400">1200W 80+ Platinum Netzteil</p></div>
+                    </div>
+                    <button class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm" data-topic="Kühlung">✨ KI-Analyse</button>
+                </div>
+                <!-- Card: Performance Pie Chart -->
+                <div class="card p-6 md:p-8 flex flex-col justify-center">
+                    <div class="relative w-40 h-40 md:w-48 md:h-48 mx-auto"><svg class="w-full h-full" viewBox="0 0 36 36" style="transform: rotate(-90deg);"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--accent-1)" stroke-width="3.5" class="donut-animated" style="--target-stroke: 100, 100;"></circle><circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--accent-2)" stroke-width="3.5" class="donut-animated" style="--target-stroke: 45, 100; transition-delay: 0.2s;"></circle><circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--accent-3)" stroke-width="3.5" class="donut-animated" style="--target-stroke: 25, 100; stroke-dashoffset: -45; transition-delay: 0.4s;"></circle></svg></div>
+                    <div class="mt-6 space-y-2 text-xs md:text-sm"><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5" style="background-color: var(--accent-1)"></div><span>Grafikkarte (GPU)</span></div><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5" style="background-color: var(--accent-2)"></div><span>Prozessor (CPU)</span></div><div class="flex items-center justify-center gap-2"><div class="w-2.5 h-2.5" style="background-color: var(--accent-3)"></div><span>Mainboard & RAM</span></div></div>
+                    <p class="text-center mt-4 text-slate-400 text-xs">Konzeptionelle Leistungsverteilung</p>
+                </div>
+                <!-- Card: Monitor Chart -->
+                <div class="card p-6 md:p-8 flex flex-col justify-center">
+                    <div class="w-full h-48 flex items-end gap-6 md:gap-8 justify-center"><div class="flex-1 max-w-[80px] h-[55%] bg-cyan-400/80 rounded-t-md chart-bar-animated" style="--target-width: 100%; height: 55%;"></div><div class="flex-1 max-w-[80px] h-[100%] bg-magenta-500/80 rounded-t-md chart-bar-animated" style="--target-width: 100%; height: 100%; transition-delay: 0.2s;"></div></div>
+                    <div class="w-full flex items-start gap-6 md:gap-8 justify-center mt-2 text-center"><div class="flex-1 max-w-[80px]"><p class="text-xs text-slate-400">Primär: 4K Gaming & Kreativ</p></div><div class="flex-1 max-w-[80px]"><p class="text-xs text-slate-400">Sekundär: Kompetitives Gaming</p></div></div>
+                    <p class="text-center mt-4 text-slate-400 text-xs">Vergleich der Monitor-Bildwiederholraten</p>
+                </div>
+                <!-- Card: Das immersive Interface -->
+                <div class="card p-6 md:p-8">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4 title-animated">Das immersive Interface</h2>
+                    <p class="text-sm md:text-base text-slate-300 mb-6">Die Leistung des PCs wird durch zwei hochmoderne OLED-Monitore zum Leben erweckt. Ein 4K-240Hz-Display für atemberaubende visuelle Erlebnisse und ein QHD-480Hz-Display für unübertroffene Wettbewerbsvorteile.</p>
+                    <div class="space-y-4 mb-8">
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">ASUS ROG Swift PG32UCDM</h3><p class="text-xs md:text-sm text-slate-400">3840x2160 @ 240Hz</p></div>
+                        <div><h3 class="font-semibold text-white text-md md:text-lg">ASUS ROG Swift PG27AQDP</h3><p class="text-xs md:text-sm text-slate-400">2560x1440 @ 480Hz</p></div>
+                    </div>
+                    <button class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm" data-topic="Interface">✨ KI-Analyse</button>
+                </div>
+                <!-- Card: KI-gestützte Einblicke -->
+                <div class="card p-6 md:p-8 lg:col-span-2">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4 title-sparkle">KI-gestützte Einblicke & Optimierung</h2>
+                    <p class="text-sm md:text-base text-slate-300 mb-4">Stellen Sie der KI eine Frage zu Ihrem PC-Build, um spezifische Einblicke, Optimierungstipps oder Empfehlungen zu erhalten.</p>
+                    <textarea id="ai-prompt" class="textarea-custom w-full h-20 p-3 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Z.B. Welche Software-Optimierungen sind für die RTX 5090 empfehlenswert?"></textarea>
+                    <button id="ai-button" class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm mt-4" data-topic="Optimierung">✨ KI-Einblick erhalten</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-16 md:mt-24 fade-in-section">
+            <p class="font-vt323 text-xl md:text-2xl text-cyan-400/80" style="text-shadow: 0 0 5px var(--accent-1);">// Erstellt von Maik und Toby //</p>
+        </footer>
+    </div>
+
+    <!-- AI Analysis Modal -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="modal-content text-center">
+            <div id="modal-loader" class="mx-auto"><div class="loader"></div><p class="mt-4 text-slate-300 text-sm">Analysiere Daten...</p></div>
+            <div id="modal-result" class="hidden"><h3 id="modal-title" class="text-2xl font-bold mb-4 title-animated">KI-Analyse</h3><p id="modal-text" class="text-slate-300 mb-6 text-left whitespace-pre-wrap"></p><button id="modal-close" class="ki-button text-white font-bold py-2 px-5 rounded-lg text-sm">Schließen</button></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- DATA ---
+            const components = [
+                { name: 'CPU', desc: 'AMD Ryzen 9 9950X3D, 4.3 GHz – 16 Kerne', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>' },
+                { name: 'CPU-Kühler', desc: 'Asus ROG STRIX LC 360 RGB GUNDAM', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6L12 22"></path><path d="M16 6L16 22"></path><path d="M8 6L8 22"></path><path d="M12 6a4 4 0 0 0 -4 -4h-1a1 1 0 0 0 -1 1v1a1 1 0 0 0 1 1h1"></path><path d="M12 6a4 4 0 0 1 4 -4h1a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-1"></path></svg>' },
+                { name: 'Mainboard', desc: 'Asus ROG CROSSHAIR X870E EXTREME', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><rect x="6" y="6" width="4" height="4"></rect><line x1="14" y1="8" x2="18" y2="8"></line><line x1="14" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg>' },
+                { name: 'Arbeitsspeicher', desc: 'Corsair Dominator Titanium 64 GB DDR5-6600', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" transform="skewX(-10)"></path><line x1="6" y1="20" x2="6" y2="4"></line><line x1="10" y1="20" x2="10" y2="4"></line><line x1="14" y1="20" x2="14" y2="4"></line><line x1="18" y1="20" x2="18" y2="4"></line></svg>' },
+                { name: 'Speicher', desc: 'Samsung 990 Pro – 4 TB NVME SSD', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.042h20v11.916H2z"></path><path d="M6 18.001v2"></path><path d="M10 18.001v2"></path><path d="M14 18.001v2"></path><path d="M18 18.001v2"></path></svg>' },
+                { name: 'Grafikkarte', desc: 'Asus ROG Astral OC RTX 5090 – 32 GB', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"></rect><circle cx="17" cy="12" r="2"></circle><path d="M2 12h10"></path><path d="M22 12h-1"></path></svg>' },
+                { name: 'Gehäuse', desc: 'HYTE Y70 Touch Infinite, ATX Mid Tower', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"></path><path d="M21 3H3v5h18V3z"></path><path d="M10 12h4"></path></svg>' },
+                { name: 'Netzteil', desc: 'Asus ROG STRIX 1200P Gaming, 1200 W', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"></path><path d="M5 12h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"></path><path d="M12 16h.01"></path></svg>' },
+                { name: 'Betriebssystem', desc: 'Windows 11 Pro OEM + Linux Ubuntu', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3.182 12.818a9 9 0 0 0 11.314 11.314A9 9 0 0 0 20.818 3.182 9 9 0 0 0 3.182 12.818z"></path><path d="M12 12h9"></path><path d="M12 3v9"></path></svg>' },
+                { name: 'Gehäuselüfter', desc: '8x Lian Li Uni Fan SL-Infinity', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><path d="m12 2 1.4 4.8"></path><path d="m22 12-4.8-1.4"></path><path d="m12 22-1.4-4.8"></path><path d="M2 12l4.8 1.4"></path></svg>' },
+                { name: 'Monitor 1', desc: 'Asus ROG Swift OLED PG32UCDM, 31.5", 4K, 240Hz', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>' },
+                { name: 'Monitor 2', desc: 'Asus ROG Swift OLED PG27AQDP, 26.5", QHD, 480Hz', icon: '<svg class="component-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>' },
+            ];
+
+            // --- INITIALIZATION ---
+            particlesJS("particles-js", {"particles":{"number":{"value":100,"density":{"enable":true,"value_area":800}},"color":{"value":"#ffffff"},"shape":{"type":"circle"},"opacity":{"value":0.5,"random":true,"anim":{"enable":true,"speed":1,"opacity_min":0.1,"sync":false}},"size":{"value":2,"random":true},"line_linked":{"enable":false},"move":{"enable":true,"speed":0.4,"direction":"none","random":true,"straight":false,"out_mode":"out","bounce":false}},"interactivity":{"detect_on":"canvas","events":{"onhover":{"enable":false},"onclick":{"enable":false},"resize":true}},"retina_detect":true});
+            
+            const componentGrid = document.getElementById('component-grid');
+            componentGrid.innerHTML = components.map(c => `
+                <div class="card p-6 flex flex-col items-center text-center">
+                    <div class="pulsate-loop mb-4">${c.icon}</div>
+                    <h3 class="font-semibold text-white text-lg mb-1">${c.name}</h3>
+                    <p class="text-xs text-slate-400">${c.desc}</p>
+                </div>
+            `).join('');
+
+            const elementsToAnimate = document.querySelectorAll('.fade-in-section, .card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        const delay = (index % 4) * 100;
+                        setTimeout(() => entry.target.classList.add('is-visible'), delay);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            elementsToAnimate.forEach(el => observer.observe(el));
+
+            // --- FUNCTIONS ---
+            const modal = document.getElementById('ai-modal'), modalLoader = document.getElementById('modal-loader'), modalResult = document.getElementById('modal-result'), modalTitle = document.getElementById('modal-title'), modalText = document.getElementById('modal-text'), modalClose = document.getElementById('modal-close'), aiPrompt = document.getElementById('ai-prompt'), aiButton = document.getElementById('ai-button');
+            
+            const systemContext = `Du bist ein Experte für PC-Hardware. Analysiere die folgende High-End-Konfiguration: ${components.map(c => `${c.name}: ${c.desc}`).join(', ')}. Antworte auf Deutsch in einem informativen und leicht verständlichen Ton.`;
+
+            async function getAiInsight(topic) {
+                let userQuestion = aiPrompt.value.trim();
+                let finalPrompt;
+
+                switch(topic) {
+                    case 'Herzstück': finalPrompt = `${systemContext}\n\nGib eine kurze, expertenhafte Analyse zum "Herzstück des Systems", insbesondere zur Synergie zwischen der CPU und dem RAM.`; break;
+                    case 'Grafik': finalPrompt = `${systemContext}\n\nAnalysiere die "Visuelle & Speicher-Suprematie" dieses Builds. Konzentriere dich auf die Leistung der RTX 5090 und des NVMe-Speichers.`; break;
+                    case 'Kühlung': finalPrompt = `${systemContext}\n\nBewerte die "Thermische & Energie-Exzellenz". Erkläre, warum die AIO-Kühlung und das Netzteil für diese Konfiguration entscheidend sind.`; break;
+                    case 'Interface': finalPrompt = `${systemContext}\n\nBeschreibe das "immersive Interface". Erläutere die Vorteile der Dual-Monitor-Konfiguration.`; break;
+                    case 'Optimierung': default: finalPrompt = `${systemContext}\n\nBeantworte die folgende spezifische Benutzerfrage zur Optimierung des Systems: "${userQuestion || "Welche allgemeinen Software-Optimierungen und ersten Schritte empfiehlst du für dieses System?"}"`; break;
+                }
+                
+                modalTitle.textContent = `KI-Analyse: ${topic}`;
+                modal.classList.add('active');
+                modalResult.classList.add('hidden');
+                modalLoader.classList.remove('hidden');
+                modalText.textContent = ''; // Clear previous text
+
+                try {
+                    let chatHistory = [{ role: "user", parts: [{ text: finalPrompt }] }];
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`API-Fehler: ${response.statusText}`);
+                    const result = await response.json();
+                    
+                    let text = "Entschuldigung, ich konnte keine Antwort generieren.";
+                    if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
+                        text = result.candidates[0].content.parts[0].text;
+                    }
+                    
+                    modalLoader.classList.add('hidden');
+                    modalResult.classList.remove('hidden');
+                    
+                    let i = 0;
+                    function typeWriter() {
+                        if (i < text.length) {
+                            modalText.textContent += text.charAt(i);
+                            i++;
+                            setTimeout(typeWriter, 20); // Typing speed
+                        }
+                    }
+                    typeWriter();
+
+                } catch (error) {
+                    console.error("Fehler bei der Gemini API-Anfrage:", error);
+                    modalLoader.classList.add('hidden');
+                    modalResult.classList.remove('hidden');
+                    modalText.textContent = "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
+                }
+            }
+            
+            function copyBuildToClipboard() {
+                const buildText = "Gaming + Entwicklung Station:\n\n" + components.map(c => `- ${c.name}: ${c.desc}`).join('\n');
+                const textarea = document.createElement('textarea');
+                textarea.value = buildText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const copyButton = document.getElementById('copy-build-button');
+                copyButton.textContent = '✅ Kopiert!';
+                setTimeout(() => { copyButton.textContent = '📋 Konfiguration kopieren'; }, 2000);
+            }
+
+            // --- EVENT LISTENERS ---
+            document.querySelectorAll('[data-topic]').forEach(button => {
+                if(button.id !== 'ai-button') {
+                     button.addEventListener('click', () => getAiInsight(button.dataset.topic));
+                }
+            });
+            aiButton.addEventListener('click', () => getAiInsight('Optimierung'));
+            modalClose.addEventListener('click', () => modal.classList.remove('active'));
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+            document.querySelectorAll('.theme-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.body.className = 'antialiased'; // Reset classes
+                    if(button.dataset.theme !== 'default') {
+                        document.body.classList.add(button.dataset.theme);
+                    }
+                });
+            });
+
+            document.getElementById('copy-build-button').addEventListener('click', copyBuildToClipboard);
+
+            document.querySelectorAll('.card').forEach(card => {
+                card.onmousemove = e => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--x', `${x}px`);
+                    card.style.setProperty('--y', `${y}px`);
+                };
+            });
+        });
+    </script>
+</body>
+</html>
